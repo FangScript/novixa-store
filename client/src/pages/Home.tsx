@@ -1,33 +1,55 @@
-import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { Streamdown } from 'streamdown';
+import { useMemo, useState } from "react";
+import { ArrowRight, Check, ChevronDown, Heart, Menu, Minus, Plus, Search, ShoppingBag, Sparkles, User, X } from "lucide-react";
 
-/**
- * All content in this page are only for example, replace with your own feature implementation
- * When building pages, remember your instructions in Frontend Workflow, Frontend Best Practices, Design Guide and Common Pitfalls
- */
+const categories = ["All products", "Perfumes", "Makeup bundles", "Accessories"];
+const products = [
+  { id: 1, name: "Velvet Rose Eau de Parfum", category: "Perfumes", price: 4999, oldPrice: 5999, rating: 4.9, reviews: 124, badge: "Bestseller", image: "https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=900&q=88" },
+  { id: 2, name: "Complete Glam Bundle", category: "Makeup bundles", price: 3999, oldPrice: 4799, rating: 4.8, reviews: 98, badge: "Bundle", image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=88" },
+  { id: 3, name: "Pro Makeup Brush Set", category: "Accessories", price: 2499, oldPrice: 2999, rating: 4.8, reviews: 76, badge: "New", image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=900&q=88" },
+  { id: 4, name: "Blending Sponges — Set of 3", category: "Accessories", price: 1299, oldPrice: 1599, rating: 4.7, reviews: 62, badge: "", image: "https://images.unsplash.com/photo-1596704017254-9b121068fb31?auto=format&fit=crop&w=900&q=88" },
+  { id: 5, name: "Amber Noir Eau de Parfum", category: "Perfumes", price: 5499, oldPrice: 6499, rating: 4.9, reviews: 44, badge: "Limited", image: "https://images.unsplash.com/photo-1615634260167-c8cdede054de?auto=format&fit=crop&w=900&q=88" },
+  { id: 6, name: "Soft Focus Essentials", category: "Makeup bundles", price: 3299, oldPrice: 3899, rating: 4.8, reviews: 52, badge: "Curated", image: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=900&q=88" },
+];
+const money = (value: number) => `Rs. ${value.toLocaleString("en-IN")}`;
+
 export default function Home() {
-  // The useAuth hook provides authentication state.
-  // To implement login/logout, call logout(), or start login from an event
-  // handler: onClick={() => startLogin()} (imported from "@/const"). Never call
-  // startLogin() during render (no href={startLogin()}) — it mints a one-time
-  // nonce cookie and must run only at the moment of navigation.
-  let { user, loading, error, isAuthenticated, logout } = useAuth();
+  const [activeCategory, setActiveCategory] = useState("All products");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [cart, setCart] = useState<number[]>([]);
+  const [wishlist, setWishlist] = useState<number[]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+  const [email, setEmail] = useState("");
+  const filtered = useMemo(() => products.filter((p) => (activeCategory === "All products" || p.category === activeCategory) && p.name.toLowerCase().includes(search.toLowerCase())), [activeCategory, search]);
+  const cartProducts = products.filter((p) => cart.includes(p.id));
+  const cartTotal = cartProducts.reduce((total, p) => total + p.price, 0);
+  const jumpTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  const addToCart = (id: number) => { setCart((c) => c.includes(id) ? c : [...c, id]); setCartOpen(true); };
+  const chooseCategory = (cat: string) => { setActiveCategory(cat); jumpTo("shop"); };
 
-  // If theme is switchable in App.tsx, we can implement theme toggling like this:
-  // const { theme, toggleTheme } = useTheme();
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      <main>
-        {/* Example: lucide-react for icons */}
-        <Loader2 className="animate-spin" />
-        Example Page
-        {/* Example: Streamdown for markdown rendering */}
-        <Streamdown>Any **markdown** content</Streamdown>
-        <Button variant="default">Example Button</Button>
-      </main>
-    </div>
-  );
+  return <div className="site-shell">
+    <div className="announcement"><Sparkles size={13} /> Complimentary shipping on orders over Rs. 2,500 <span>·</span> Easy returns within 7 days</div>
+    <header className="nav-wrap">
+      <button className="mobile-menu-button" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Open menu"><Menu size={21} /></button>
+      <a className="wordmark" href="#top">NOVIXA</a>
+      <nav className={`main-nav ${mobileMenu ? "is-open" : ""}`}>
+        <button className="nav-link active" onClick={() => { jumpTo("top"); setMobileMenu(false); }}>Home</button><button className="nav-link" onClick={() => { jumpTo("shop"); setMobileMenu(false); }}>Shop</button><button className="nav-link" onClick={() => { chooseCategory("Perfumes"); setMobileMenu(false); }}>Perfumes</button><button className="nav-link" onClick={() => { chooseCategory("Makeup bundles"); setMobileMenu(false); }}>Makeup Bundles</button><button className="nav-link" onClick={() => { chooseCategory("Accessories"); setMobileMenu(false); }}>Accessories</button>
+      </nav>
+      <div className="nav-actions"><button aria-label="Search" onClick={() => setSearchOpen(!searchOpen)}><Search size={19} strokeWidth={1.5} /></button><button aria-label="Account"><User size={19} strokeWidth={1.5} /></button><button aria-label="Shopping bag" className="bag-button" onClick={() => setCartOpen(true)}><ShoppingBag size={19} strokeWidth={1.5} /><span>{cart.length}</span></button></div>
+    </header>
+    {searchOpen && <div className="search-bar"><Search size={17} /><input autoFocus placeholder="Search your next signature..." value={search} onChange={(e) => setSearch(e.target.value)} /><button onClick={() => { setSearch(""); setSearchOpen(false); }}><X size={17} /></button></div>}
+    <main id="top">
+      <section className="hero-section"><div className="hero-copy"><p className="eyebrow light">Beauty <span>·</span> Fragrance <span>·</span> You</p><h1>Discover<br />Your Signature<br /><em>Glow</em></h1><p className="hero-desc">Premium perfumes, curated makeup bundles and must-have accessories — all in one place.</p><button className="button light-button" onClick={() => jumpTo("shop")}>Shop now <ArrowRight size={16} /></button></div><div className="hero-orbit"><div className="orbit-line" /><span>NEW ARRIVALS</span></div></section>
+      <section className="category-section section-pad"><div className="section-heading centered"><p className="eyebrow">The edit</p><h2>Shop by category</h2><p>Small rituals. Beautifully considered.</p></div><div className="category-grid">{[{ name: "Perfumes", sub: "Scents that tell your story", image: "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=1000&q=88" }, { name: "Makeup Bundles", sub: "Everything you need, in one bundle", image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1000&q=88" }, { name: "Makeup Accessories", sub: "Small tools. Big difference.", image: "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&w=1000&q=88" }].map((c) => <button key={c.name} className="category-card" onClick={() => chooseCategory(c.name === "Makeup Accessories" ? "Accessories" : c.name)}><img src={c.image} alt={c.name} /><div className="category-overlay"><h3>{c.name}</h3><p>{c.sub}</p><span>Shop now <ArrowRight size={14} /></span></div></button>)}</div></section>
+      <section id="shop" className="shop-section section-pad"><div className="shop-top"><div><p className="eyebrow">Featured products</p><h2>Our best sellers</h2></div><button className="text-button" onClick={() => setActiveCategory("All products")}>View all <ArrowRight size={15} /></button></div><div className="filter-row"><div className="category-tabs">{categories.map((category) => <button key={category} className={activeCategory === category ? "selected" : ""} onClick={() => setActiveCategory(category)}>{category}</button>)}</div><button className="sort-button">Sort by <strong>Featured</strong> <ChevronDown size={14} /></button></div><div className="product-grid">{filtered.map((p) => <article className="product-card" key={p.id}><div className="product-image"><img src={p.image} alt={p.name} />{p.badge && <span className="badge">{p.badge}</span>}<button className={`heart ${wishlist.includes(p.id) ? "liked" : ""}`} onClick={() => setWishlist((w) => w.includes(p.id) ? w.filter((id) => id !== p.id) : [...w, p.id])} aria-label="Add to wishlist"><Heart size={17} fill={wishlist.includes(p.id) ? "currentColor" : "none"} /></button></div><div className="product-meta"><p className="product-category">{p.category}</p><h3>{p.name}</h3><div className="price-row"><strong>{money(p.price)}</strong><del>{money(p.oldPrice)}</del></div><div className="rating"><span>★★★★★</span> <small>{p.rating} ({p.reviews})</small></div><button className="add-button" onClick={() => addToCart(p.id)}>{cart.includes(p.id) ? <><Check size={15} /> Added to bag</> : "Add to cart"}</button></div></article>)}</div>{filtered.length === 0 && <div className="empty-state">No pieces found. Try another search.</div>}</section>
+      <section className="editorial-banner"><div className="editorial-copy"><p className="eyebrow light">The fragrance wardrobe</p><h2>Find the scent<br /><em>that feels like you.</em></h2><p>From first light to after dark, discover notes made for every version of you.</p><button className="button light-button" onClick={() => chooseCategory("Perfumes")}>Explore perfumes <ArrowRight size={16} /></button></div></section>
+      <section className="values-section section-pad"><div className="section-heading centered"><p className="eyebrow">Why Novixa?</p><h2>Beauty, made personal.</h2></div><div className="values-grid">{[{ icon: "✧", title: "Premium quality", text: "Only the best for you" }, { icon: "✦", title: "Curated selection", text: "Trendy & timeless" }, { icon: "◇", title: "Affordable luxury", text: "Beauty for everyone" }, { icon: "♧", title: "Loved by thousands", text: "Real people. Real love." }].map((v) => <div className="value-item" key={v.title}><span>{v.icon}</span><h3>{v.title}</h3><p>{v.text}</p></div>)}</div></section>
+      <section className="testimonial-section"><div className="testimonial-card"><p className="eyebrow light">A little love note</p><div className="stars">★★★★★</div><blockquote>“Absolutely love the products! The perfume lasts all day and the makeup bundle is perfect. Highly recommend NOVIXA!”</blockquote><p className="reviewer">— Anvesha R.</p></div><div className="testimonial-image" /></section>
+      <section className="newsletter-section"><div><p className="eyebrow light">Stay in the loop</p><h2>Get exclusive offers</h2><p>Be the first to know about new arrivals, special discounts and beauty tips.</p></div>{subscribed ? <div className="subscribed"><Check size={17} /> You're on the list. Welcome to NOVIXA.</div> : <form className="newsletter-form" onSubmit={(e) => { e.preventDefault(); if (email) setSubscribed(true); }}><input type="email" required placeholder="Enter your email address" value={email} onChange={(e) => setEmail(e.target.value)} /><button type="submit">Subscribe <ArrowRight size={15} /></button></form>}</section>
+    </main>
+    <footer className="footer"><div className="footer-brand"><a className="wordmark" href="#top">NOVIXA</a><p>More than beauty. It's the lifestyle.</p><div className="socials"><span>◎</span><span>◌</span><span>f</span><span>p</span></div></div><div className="footer-links"><div><h4>Quick links</h4><button onClick={() => jumpTo("top")}>Home</button><button onClick={() => jumpTo("shop")}>Shop</button><button onClick={() => chooseCategory("Perfumes")}>Perfumes</button><button onClick={() => chooseCategory("Makeup bundles")}>Makeup Bundles</button></div><div><h4>Customer care</h4><button>Shipping policy</button><button>Returns & refunds</button><button>FAQs</button><button>Contact us</button></div></div><div className="footer-note"><p>© 2026 NOVIXA. All rights reserved.</p><span>Privacy policy</span><span>Terms & conditions</span></div></footer>
+    {cartOpen && <><div className="drawer-backdrop" onClick={() => setCartOpen(false)} /><aside className="cart-drawer"><div className="drawer-head"><div><p className="eyebrow">Your selection</p><h2>Shopping bag <span>({cart.length})</span></h2></div><button onClick={() => setCartOpen(false)} aria-label="Close cart"><X size={21} /></button></div>{cartProducts.length === 0 ? <div className="cart-empty"><ShoppingBag size={30} strokeWidth={1} /><p>Your bag is waiting for something beautiful.</p><button className="button dark-button" onClick={() => { setCartOpen(false); jumpTo("shop"); }}>Discover pieces</button></div> : <><div className="cart-items">{cartProducts.map((p) => <div className="cart-item" key={p.id}><img src={p.image} alt={p.name} /><div><h3>{p.name}</h3><p>{money(p.price)}</p><button onClick={() => setCart((c) => c.filter((id) => id !== p.id))}>Remove</button></div><div className="quantity"><button><Minus size={12} /></button><span>1</span><button><Plus size={12} /></button></div></div>)}</div><div className="cart-summary"><div><span>Subtotal</span><strong>{money(cartTotal)}</strong></div><p>Shipping calculated at checkout.</p><button className="button dark-button full">Checkout <ArrowRight size={16} /></button></div></>}</aside></>}
+  </div>;
 }
